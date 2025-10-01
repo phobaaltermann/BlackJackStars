@@ -1,6 +1,6 @@
-// взято и адаптировано от lucasdcampos
+// Взято и адаптировано из lucasdcampos/blackjack с доработками
 
-const SUITS = ["♠","♥","♦","♣"];
+const SUITS = ["H","D","C","S"];
 const VALUES = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
 
 let deck = [];
@@ -11,28 +11,6 @@ let balance = 0;
 let bet = 50;
 let inGame = false;
 
-// инициализация Telegram WebApp
-const tg = window.Telegram.WebApp;
-tg.expand();
-
-const user = tg.initDataUnsafe?.user;
-const user_id = user?.id ?? 0;
-
-// Получить баланс от backend (если реализовано)
-async function loadBalance() {
-  // предположим, есть endpoint /api/user/{user_id}/balance
-  try {
-    const res = await fetch(`/api/user/${user_id}/balance`);
-    const j = await res.json();
-    if (j.balance !== undefined) {
-      balance = j.balance;
-      updateInfo();
-    }
-  } catch (e) {
-    console.error("Ошибка загрузки баланса:", e);
-  }
-}
-
 function shuffleDeck() {
   deck = [];
   for (let s of SUITS) {
@@ -40,6 +18,7 @@ function shuffleDeck() {
       deck.push(v + s);
     }
   }
+  // Fisher-Yates
   for (let i = deck.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [deck[i], deck[j]] = [deck[j], deck[i]];
@@ -47,7 +26,7 @@ function shuffleDeck() {
 }
 
 function cardValue(card) {
-  const v = card.slice(0, -1);
+  let v = card.slice(0, -1);
   if (["J","Q","K"].includes(v)) return 10;
   if (v === "A") return 11;
   return parseInt(v);
@@ -72,7 +51,6 @@ function renderHands(showDealer = false) {
   const dh = document.getElementById("dealer-cards");
   ph.innerHTML = "";
   dh.innerHTML = "";
-
   for (let c of playerHand) {
     let img = document.createElement("img");
     img.src = `cards/${c}.png`;
@@ -85,6 +63,7 @@ function renderHands(showDealer = false) {
       dh.appendChild(img);
     }
   } else {
+    // показываем первую карту дилера, остальные скрыты
     if (dealerHand.length > 0) {
       let img = document.createElement("img");
       img.src = `cards/${dealerHand[0]}.png`;
@@ -94,18 +73,19 @@ function renderHands(showDealer = false) {
       dh.appendChild(img2);
     }
   }
-  document.getElementById("player-score").innerText = `Очки: ${handScore(playerHand)}`;
-  if (showDealer)
-    document.getElementById("dealer-score").innerText = `Очки: ${handScore(dealerHand)}`;
-  else
+  document.getElementById("player-score").innerText = "Очки: " + handScore(playerHand);
+  if (showDealer) {
+    document.getElementById("dealer-score").innerText = "Очки: " + handScore(dealerHand);
+  } else {
     document.getElementById("dealer-score").innerText = "";
+  }
 }
 
 function showMessage(msg) {
   document.getElementById("message").innerText = msg;
 }
 
-function deal() {
+function newDeal() {
   if (inGame) {
     showMessage("Игра уже идёт");
     return;
@@ -116,12 +96,12 @@ function deal() {
   }
   inGame = true;
   balance -= bet;
-  updateInfo();
   shuffleDeck();
   playerHand = [deck.pop(), deck.pop()];
   dealerHand = [deck.pop(), deck.pop()];
   renderHands(false);
-  showMessage("Ходи!");
+  showMessage("Игра — действуй!");
+  updateInfo();
 }
 
 function hit() {
@@ -131,11 +111,9 @@ function hit() {
   }
   playerHand.push(deck.pop());
   renderHands(false);
-  const ps = handScore(playerHand);
+  let ps = handScore(playerHand);
   if (ps > 21) {
     endRound("Перебор! Ты проиграл.");
-  } else {
-    showMessage("Твой ход");
   }
 }
 
@@ -144,6 +122,7 @@ function stand() {
     showMessage("Начни игру");
     return;
   }
+  // дилер тянет до 17
   while (handScore(dealerHand) < 17) {
     dealerHand.push(deck.pop());
   }
@@ -157,12 +136,11 @@ function doubleDown() {
     return;
   }
   if (balance < bet) {
-    showMessage("Недостаточно звёзд");
+    showMessage("Недостаточно для Double");
     return;
   }
   balance -= bet;
   bet *= 2;
-  updateInfo();
   playerHand.push(deck.pop());
   renderHands(false);
   stand();
@@ -175,23 +153,17 @@ function decideWinner() {
     balance += bet * 2;
     endRound("🎉 Ты выиграл!");
   } else if (ps < ds) {
-    endRound("😢 Дилер победил");
+    endRound("😢 Дилер выиграл");
   } else {
     balance += bet;
-    endRound("🤝 Ничья");
+    endRound("Ничья 🤝");
   }
 }
 
-function endRound(msg) {
+function endRound(message) {
   inGame = false;
-  showMessage(msg);
+  showMessage(message);
   updateInfo();
-}
-
-function changeBet(delta) {
-  if (inGame) return;
-  bet = Math.max(10, bet + delta);
-  document.getElementById("bet").innerText = bet;
 }
 
 function updateInfo() {
@@ -199,9 +171,10 @@ function updateInfo() {
   document.getElementById("bet").innerText = bet;
 }
 
-// старт
-window.onload = () => {
-  loadBalance();
+// инициализация
+window.onload = function() {
+  // баланс может загрузиться от backend
+  balance = 1000;
   updateInfo();
-  showMessage("Нажми «Новая раздача»");
+  showMessage("Нажми «Новая игра»");
 };
