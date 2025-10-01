@@ -7,16 +7,16 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-  <div class="wrapper">
+  <div class="container">
     <header>
       <h1>Blackjack Stars</h1>
-      <div class="info">
+      <div class="top-info">
         <span>Баланс: <span id="balance">0</span> ⭐</span>
         <span>Ставка: <span id="bet">50</span> ⭐</span>
       </div>
     </header>
 
-    <div class="game-area">
+    <main>
       <div class="hand dealer">
         <h2>Дилер</h2>
         <div id="dealer-cards" class="cards"></div>
@@ -28,21 +28,21 @@
         <div id="player-score" class="score"></div>
       </div>
       <div id="message" class="message"></div>
-    </div>
+    </main>
 
     <footer>
       <div class="bet-controls">
         <button onclick="changeBet(-10)">–10</button>
         <button onclick="changeBet(10)">+10</button>
       </div>
-      <div class="actions">
-        <button onclick="deal()">Новая раздача</button>
+      <div class="controls">
+        <button onclick="newDeal()">Новая игра</button>
         <button onclick="hit()">Hit</button>
         <button onclick="stand()">Stand</button>
         <button onclick="doubleDown()">Double</button>
       </div>
     </footer>
   </div>
-  <script src="blackjack.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
