@@ -31,7 +31,7 @@ let dealer = [];
 let inRound = false;
 let canDouble = false;
 let currentBet = 0;
-let money = 1000;
+let money = 1000 ⭐;
 
 // === Card helpers ===
 function cardFilename(card) {
@@ -212,7 +212,7 @@ function finishRound() {
 function endRoundCleanup() {
   inRound = false; setControls('roundOver'); renderHands(false);
   if (shoe._needReshuffle) { reshuffleShoe(); statusEl.textContent += ' Колода перетасована.'; }
-  if (money <= 0) { money=1000; statusEl.textContent += ' Баланс сброшен до 1000.'; }
+  if (money <= 0) { money=1000; statusEl.textContent += ' Баланс сброшен до 1000 ⭐'; }
 }
 
 // === Events ===
@@ -234,4 +234,5 @@ btnHit.addEventListener('click', playerHit);
 btnStand.addEventListener('click', playerStand);
 btnDouble.addEventListener('click', playerDouble);
 btnNew.addEventListener('click', () => startRound(parseInt(betEl.value,10)||1));
+
 
