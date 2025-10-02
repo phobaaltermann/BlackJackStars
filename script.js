@@ -1,180 +1,274 @@
-// Взято и адаптировано из lucasdcampos/blackjack с доработками
+// Простая, но корректная логика BlackJack.
 
-const SUITS = ["H","D","C","S"];
-const VALUES = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
+// Игра хранится в объекте `game`
+const game = {
+  deck: [],
+  player: [],
+  dealer: [],
+  inRound: false,
+  canDouble: false,
+  doubled: false,
+  bet: 10,
+  money: 1000
+};
 
-let deck = [];
-let playerHand = [];
-let dealerHand = [];
+const suits = ['♠','♥','♦','♣'];
+const ranks = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
 
-let balance = 0;
-let bet = 50;
-let inGame = false;
+// --- DOM ---
+const startScreen = document.getElementById('start-screen');
+const startBtn = document.getElementById('start-btn');
+const gameArea = document.getElementById('game-area');
+const moneyDisplay = document.getElementById('money-display');
+const betInput = document.getElementById('bet-input');
 
-function shuffleDeck() {
-  deck = [];
-  for (let s of SUITS) {
-    for (let v of VALUES) {
-      deck.push(v + s);
+const dealerCardsDiv = document.getElementById('dealer-cards');
+const playerCardsDiv = document.getElementById('player-cards');
+const dealerSumDiv = document.getElementById('dealer-sum');
+const playerSumDiv = document.getElementById('player-sum');
+const statusDiv = document.getElementById('status');
+
+const hitBtn = document.getElementById('hit-btn');
+const standBtn = document.getElementById('stand-btn');
+const doubleBtn = document.getElementById('double-btn');
+const newBtn = document.getElementById('new-btn');
+
+// --- Deck / cards helpers ---
+function createDeck(numDecks = 1) {
+  const deck = [];
+  for (let d = 0; d < numDecks; d++) {
+    for (const s of suits) {
+      for (const r of ranks) {
+        deck.push({r, s});
+      }
     }
   }
-  // Fisher-Yates
+  return deck;
+}
+function shuffle(deck) {
   for (let i = deck.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [deck[i], deck[j]] = [deck[j], deck[i]];
   }
 }
-
-function cardValue(card) {
-  let v = card.slice(0, -1);
-  if (["J","Q","K"].includes(v)) return 10;
-  if (v === "A") return 11;
-  return parseInt(v);
+function draw() {
+  if (game.deck.length === 0) {
+    game.deck = createDeck(4);
+    shuffle(game.deck);
+  }
+  return game.deck.pop();
 }
-
-function handScore(hand) {
-  let sum = 0;
+function cardToText(card) {
+  return `${card.r}${card.s}`;
+}
+function calcValue(cards) {
+  let total = 0;
   let aces = 0;
-  for (let c of hand) {
-    sum += cardValue(c);
-    if (c.slice(0, -1) === "A") aces++;
+  for (const c of cards) {
+    if (c.r === 'A') { total += 11; aces++; }
+    else if (['J','Q','K'].includes(c.r)) total += 10;
+    else total += parseInt(c.r, 10);
   }
-  while (sum > 21 && aces > 0) {
-    sum -= 10;
-    aces--;
+  while (total > 21 && aces > 0) {
+    total -= 10; aces--;
   }
-  return sum;
+  return total;
 }
 
-function renderHands(showDealer = false) {
-  const ph = document.getElementById("player-cards");
-  const dh = document.getElementById("dealer-cards");
-  ph.innerHTML = "";
-  dh.innerHTML = "";
-  for (let c of playerHand) {
-    let img = document.createElement("img");
-    img.src = `cards/${c}.png`;
-    ph.appendChild(img);
-  }
-  if (showDealer) {
-    for (let c of dealerHand) {
-      let img = document.createElement("img");
-      img.src = `cards/${c}.png`;
-      dh.appendChild(img);
+// --- UI update ---
+function updateUI() {
+  moneyDisplay.textContent = game.money;
+  dealerCardsDiv.innerHTML = '';
+  playerCardsDiv.innerHTML = '';
+
+  // Dealer: если раунд всё ещё идет, показываем 1 открытую + 1 скрытую карту
+  if (game.inRound) {
+    // первая карта открыта
+    const first = game.dealer[0];
+    dealerCardsDiv.appendChild(makeCardNode(first));
+    // вторая карта скрыта
+    if (game.dealer.length > 1) {
+      const hidden = document.createElement('div');
+      hidden.className = 'card hidden';
+      hidden.textContent = '🂠';
+      dealerCardsDiv.appendChild(hidden);
     }
+    dealerSumDiv.textContent = '?';
   } else {
-    // показываем первую карту дилера, остальные скрыты
-    if (dealerHand.length > 0) {
-      let img = document.createElement("img");
-      img.src = `cards/${dealerHand[0]}.png`;
-      dh.appendChild(img);
-      let img2 = document.createElement("img");
-      img2.src = `cards/back.png`;
-      dh.appendChild(img2);
-    }
+    // показать все карты дилера
+    for (const c of game.dealer) dealerCardsDiv.appendChild(makeCardNode(c));
+    dealerSumDiv.textContent = calcValue(game.dealer);
   }
-  document.getElementById("player-score").innerText = "Очки: " + handScore(playerHand);
-  if (showDealer) {
-    document.getElementById("dealer-score").innerText = "Очки: " + handScore(dealerHand);
+
+  // игрок
+  for (const c of game.player) playerCardsDiv.appendChild(makeCardNode(c));
+  playerSumDiv.textContent = calcValue(game.player);
+
+  // кнопки
+  hitBtn.disabled = !game.inRound;
+  standBtn.disabled = !game.inRound;
+  doubleBtn.disabled = !game.inRound || !game.canDouble;
+  newBtn.style.display = game.inRound ? 'none' : 'inline-block';
+}
+
+function makeCardNode(card) {
+  const d = document.createElement('div');
+  d.className = 'card';
+  d.textContent = cardToText(card);
+  return d;
+}
+
+function showStatus(text) {
+  statusDiv.textContent = text;
+}
+
+// --- Game flow ---
+function startGame() {
+  // инициализация
+  game.deck = createDeck(4);
+  shuffle(game.deck);
+  game.player = [];
+  game.dealer = [];
+  game.doubled = false;
+  game.inRound = true;
+  game.bet = Math.max(1, parseInt(betInput.value || 10, 10));
+  // проверка баланса
+  if (game.bet > game.money) {
+    showStatus('Ставка больше, чем баланс! Установлена ставка = баланс.');
+    game.bet = game.money;
+    betInput.value = game.bet;
+  }
+  // раздача
+  game.player.push(draw());
+  game.dealer.push(draw());
+  game.player.push(draw());
+  game.dealer.push(draw());
+
+  // дабл доступен пока у игрока 2 карты и он не делал ход
+  game.canDouble = (game.player.length === 2);
+  showStatus(`Игра началась. Ставка: ${game.bet}`);
+  // скрываем старт, показываем игровую зону
+  startScreen.style.display = 'none';
+  gameArea.style.display = 'block';
+
+  updateUI();
+
+  // если у игрока 21 сразу — конец раунда (блекджек)
+  const pv = calcValue(game.player);
+  if (pv === 21) {
+    endRound();
+  }
+}
+
+function playerHit() {
+  if (!game.inRound) return;
+  game.player.push(draw());
+  // после любого "hit" дабл больше недоступен
+  game.canDouble = false;
+  updateUI();
+
+  if (calcValue(game.player) > 21) {
+    showStatus('Перебор! Вы проиграли ставку.');
+    endRound();
+  }
+}
+
+function playerDouble() {
+  if (!game.inRound) return;
+  // правило: дабл доступен только при двух картах (обычно) и достаточном балансе
+  if (!game.canDouble || game.player.length !== 2) {
+    showStatus('Дабл недоступен (только на первых двух картах).');
+    return;
+  }
+  if (game.bet * 2 > game.money) {
+    showStatus('Недостаточно средств для удвоения ставки.');
+    return;
+  }
+  // удваиваем ставку
+  game.bet *= 2;
+  game.doubled = true;
+  // даём ровно одну карту и немедленно завершаем ход игрока
+  game.player.push(draw());
+  game.canDouble = false;
+  updateUI();
+
+  // после дабла автоматически переходим к дилеру
+  endRound();
+}
+
+function playerStand() {
+  if (!game.inRound) return;
+  endRound();
+}
+
+function dealerPlay() {
+  // дилер берёт, пока < 17
+  while (calcValue(game.dealer) < 17) {
+    game.dealer.push(draw());
+  }
+}
+
+function endRound() {
+  // завершение раунда
+  game.inRound = false;
+  // дилер играет
+  dealerPlay();
+  updateUI();
+
+  const pv = calcValue(game.player);
+  const dv = calcValue(game.dealer);
+  let resultText = '';
+  if (pv > 21) {
+    resultText = `Вы перебрали (${pv}). Проигрыш.`;
+    game.money -= game.bet;
+  } else if (dv > 21) {
+    resultText = `Дилер перебрал (${dv}). Вы выиграли!`;
+    game.money += game.bet;
+  } else if (pv > dv) {
+    resultText = `Вы ${pv} vs ${dv} — победа!`;
+    game.money += game.bet;
+  } else if (pv < dv) {
+    resultText = `Вы ${pv} vs ${dv} — проигрыш.`;
+    game.money -= game.bet;
   } else {
-    document.getElementById("dealer-score").innerText = "";
+    resultText = `Ничья ${pv} vs ${dv}. Ставка возвращена.`;
+    // баланс не меняем
   }
+
+  showStatus(resultText + ` Баланс: ${game.money}`);
+  updateUI();
+
+  // показываем кнопку "Новая игра"
+  newBtn.style.display = 'inline-block';
 }
 
-function showMessage(msg) {
-  document.getElementById("message").innerText = msg;
-}
+// --- Event listeners ---
+startBtn.addEventListener('click', () => {
+  startGame();
+});
 
-function newDeal() {
-  if (inGame) {
-    showMessage("Игра уже идёт");
-    return;
-  }
-  if (balance < bet) {
-    showMessage("Недостаточно звёзд");
-    return;
-  }
-  inGame = true;
-  balance -= bet;
-  shuffleDeck();
-  playerHand = [deck.pop(), deck.pop()];
-  dealerHand = [deck.pop(), deck.pop()];
-  renderHands(false);
-  showMessage("Игра — действуй!");
-  updateInfo();
-}
+hitBtn.addEventListener('click', () => {
+  playerHit();
+});
 
-function hit() {
-  if (!inGame) {
-    showMessage("Начни игру");
-    return;
-  }
-  playerHand.push(deck.pop());
-  renderHands(false);
-  let ps = handScore(playerHand);
-  if (ps > 21) {
-    endRound("Перебор! Ты проиграл.");
-  }
-}
+standBtn.addEventListener('click', () => {
+  playerStand();
+});
 
-function stand() {
-  if (!inGame) {
-    showMessage("Начни игру");
-    return;
-  }
-  // дилер тянет до 17
-  while (handScore(dealerHand) < 17) {
-    dealerHand.push(deck.pop());
-  }
-  renderHands(true);
-  decideWinner();
-}
+doubleBtn.addEventListener('click', () => {
+  playerDouble();
+});
 
-function doubleDown() {
-  if (!inGame) {
-    showMessage("Начни игру");
-    return;
-  }
-  if (balance < bet) {
-    showMessage("Недостаточно для Double");
-    return;
-  }
-  balance -= bet;
-  bet *= 2;
-  playerHand.push(deck.pop());
-  renderHands(false);
-  stand();
-}
+newBtn.addEventListener('click', () => {
+  // вернуться к стартовому экран
+  game.inRound = false;
+  startScreen.style.display = 'block';
+  gameArea.style.display = 'none';
+  showStatus('');
+  newBtn.style.display = 'none';
+  // оставляем баланс и ставку как есть
+  moneyDisplay.textContent = game.money;
+});
 
-function decideWinner() {
-  const ps = handScore(playerHand);
-  const ds = handScore(dealerHand);
-  if (ds > 21 || ps > ds) {
-    balance += bet * 2;
-    endRound("🎉 Ты выиграл!");
-  } else if (ps < ds) {
-    endRound("😢 Дилер выиграл");
-  } else {
-    balance += bet;
-    endRound("Ничья 🤝");
-  }
-}
-
-function endRound(message) {
-  inGame = false;
-  showMessage(message);
-  updateInfo();
-}
-
-function updateInfo() {
-  document.getElementById("balance").innerText = balance;
-  document.getElementById("bet").innerText = bet;
-}
-
-// инициализация
-window.onload = function() {
-  // баланс может загрузиться от backend
-  balance = 1000;
-  updateInfo();
-  showMessage("Нажми «Новая игра»");
-};
+// --- Инициализация отображения ---
+updateUI();
