@@ -3,46 +3,64 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Blackjack</title>
+  <title>Blackjack — standalone</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="container">
-    <h1>Blackjack</h1>
-
-    <!-- Баланс и ставка -->
-    <div class="info">
-      <div>Баланс: <span id="money">1000</span></div>
-      <div>
-        Ставка: <input type="number" id="bet" min="1" value="50" />
+  <main class="wrap">
+    <!-- START SCREEN -->
+    <section id="start-screen" class="panel center">
+      <h1>BlackJack</h1>
+      <p>Классическая игра с 6 колод (shoe). Дилер стоит на любом 17 (S17).</p>
+      <div class="row">
+        <label>Баланс: <strong id="start-money">1000</strong></label>
       </div>
-    </div>
+      <div class="row" style="margin-top:8px;">
+        <label>Ставка по умолчанию: <input id="start-bet" type="number" min="1" value="20" /></label>
+      </div>
+      <div class="row" style="margin-top:12px;">
+        <button id="btn-start">Начать игру</button>
+      </div>
+      <p class="muted">Double — доступен только на первых двух картах. Blackjack payout configurable.</p>
+    </section>
 
-    <!-- Игровая зона -->
-    <div id="table">
-      <div class="hand">
-        <h2>Дилер</h2>
-        <div id="dealer-cards" class="cards"></div>
-        <div id="dealer-sum" class="sum"></div>
+    <!-- GAME AREA -->
+    <section id="game-screen" class="panel" style="display:none;">
+      <div class="topbar">
+        <div>Баланс: <span id="money">0</span></div>
+        <div>Текущая ставка: <input id="bet" type="number" min="1" value="20" /></div>
+        <div>Decks: 6 · Reshuffle @ 75%</div>
       </div>
 
-      <div class="hand">
-        <h2>Игрок</h2>
-        <div id="player-cards" class="cards"></div>
-        <div id="player-sum" class="sum"></div>
+      <div class="table">
+        <div class="hand">
+          <h3>Дилер</h3>
+          <div id="dealer-cards" class="cards"></div>
+          <div id="dealer-sum" class="sum"></div>
+        </div>
+
+        <div class="hand">
+          <h3>Игрок</h3>
+          <div id="player-cards" class="cards"></div>
+          <div id="player-sum" class="sum"></div>
+        </div>
       </div>
-    </div>
 
-    <!-- Панель управления -->
-    <div id="controls">
-      <button id="start">Начать игру</button>
-      <button id="hit" disabled>Взять</button>
-      <button id="stand" disabled>Стоп</button>
-      <button id="double" disabled>Дабл</button>
-    </div>
+      <div class="controls">
+        <button id="btn-hit" disabled>Взять</button>
+        <button id="btn-stand" disabled>Стоп</button>
+        <button id="btn-double" disabled>Дабл</button>
+        <button id="btn-new" style="display:none;">Новая игра</button>
+      </div>
 
-    <div id="status"></div>
-  </div>
+      <div id="status" class="status"></div>
+
+      <footer class="muted small">
+        <div>Правила: Double — только на первых 2 картах; дилер стоит на любом 17 (S17).</div>
+        <div>Blackjack payout — configurable в коде (по умолчанию 1.5×).</div>
+      </footer>
+    </section>
+  </main>
 
   <script src="script.js"></script>
 </body>
