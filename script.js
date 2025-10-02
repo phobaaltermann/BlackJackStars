@@ -1,274 +1,193 @@
-// Простая, но корректная логика BlackJack.
-
-// Игра хранится в объекте `game`
-const game = {
-  deck: [],
-  player: [],
-  dealer: [],
-  inRound: false,
-  canDouble: false,
-  doubled: false,
-  bet: 10,
-  money: 1000
-};
-
-const suits = ['♠','♥','♦','♣'];
+const suits = ['♠', '♥', '♦', '♣'];
 const ranks = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
 
-// --- DOM ---
-const startScreen = document.getElementById('start-screen');
-const startBtn = document.getElementById('start-btn');
-const gameArea = document.getElementById('game-area');
-const moneyDisplay = document.getElementById('money-display');
-const betInput = document.getElementById('bet-input');
+let deck = [];
+let player = [];
+let dealer = [];
+let money = 1000;
+let bet = 0;
+let inRound = false;
+let canDouble = false;
 
-const dealerCardsDiv = document.getElementById('dealer-cards');
-const playerCardsDiv = document.getElementById('player-cards');
-const dealerSumDiv = document.getElementById('dealer-sum');
-const playerSumDiv = document.getElementById('player-sum');
-const statusDiv = document.getElementById('status');
+const moneyEl = document.getElementById("money");
+const betEl = document.getElementById("bet");
+const dealerCardsEl = document.getElementById("dealer-cards");
+const playerCardsEl = document.getElementById("player-cards");
+const dealerSumEl = document.getElementById("dealer-sum");
+const playerSumEl = document.getElementById("player-sum");
+const statusEl = document.getElementById("status");
 
-const hitBtn = document.getElementById('hit-btn');
-const standBtn = document.getElementById('stand-btn');
-const doubleBtn = document.getElementById('double-btn');
-const newBtn = document.getElementById('new-btn');
+const startBtn = document.getElementById("start");
+const hitBtn = document.getElementById("hit");
+const standBtn = document.getElementById("stand");
+const doubleBtn = document.getElementById("double");
 
-// --- Deck / cards helpers ---
-function createDeck(numDecks = 1) {
-  const deck = [];
-  for (let d = 0; d < numDecks; d++) {
-    for (const s of suits) {
-      for (const r of ranks) {
-        deck.push({r, s});
-      }
+// --- Колода ---
+function makeDeck() {
+  let d = [];
+  for (let s of suits) {
+    for (let r of ranks) {
+      d.push({r, s});
     }
   }
-  return deck;
-}
-function shuffle(deck) {
-  for (let i = deck.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [deck[i], deck[j]] = [deck[j], deck[i]];
+  for (let i = d.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i+1));
+    [d[i], d[j]] = [d[j], d[i]];
   }
+  return d;
 }
-function draw() {
-  if (game.deck.length === 0) {
-    game.deck = createDeck(4);
-    shuffle(game.deck);
-  }
-  return game.deck.pop();
-}
-function cardToText(card) {
-  return `${card.r}${card.s}`;
-}
-function calcValue(cards) {
+
+// --- Подсчёт суммы руки ---
+function handValue(hand) {
   let total = 0;
   let aces = 0;
-  for (const c of cards) {
-    if (c.r === 'A') { total += 11; aces++; }
-    else if (['J','Q','K'].includes(c.r)) total += 10;
-    else total += parseInt(c.r, 10);
+  for (let c of hand) {
+    if (c.r === 'A') {
+      total += 11; aces++;
+    } else if (['J','Q','K'].includes(c.r)) {
+      total += 10;
+    } else {
+      total += parseInt(c.r);
+    }
   }
   while (total > 21 && aces > 0) {
-    total -= 10; aces--;
+    total -= 10;
+    aces--;
   }
   return total;
 }
 
-// --- UI update ---
-function updateUI() {
-  moneyDisplay.textContent = game.money;
-  dealerCardsDiv.innerHTML = '';
-  playerCardsDiv.innerHTML = '';
+// --- Рендер ---
+function render() {
+  moneyEl.textContent = money;
+  dealerCardsEl.innerHTML = '';
+  playerCardsEl.innerHTML = '';
 
-  // Dealer: если раунд всё ещё идет, показываем 1 открытую + 1 скрытую карту
-  if (game.inRound) {
-    // первая карта открыта
-    const first = game.dealer[0];
-    dealerCardsDiv.appendChild(makeCardNode(first));
-    // вторая карта скрыта
-    if (game.dealer.length > 1) {
-      const hidden = document.createElement('div');
-      hidden.className = 'card hidden';
-      hidden.textContent = '🂠';
-      dealerCardsDiv.appendChild(hidden);
-    }
-    dealerSumDiv.textContent = '?';
+  if (inRound) {
+    // показываем первую карту дилера, вторую прячем
+    addCard(dealerCardsEl, dealer[0]);
+    let hidden = document.createElement("div");
+    hidden.className = "card";
+    hidden.textContent = "🂠";
+    dealerCardsEl.appendChild(hidden);
+    dealerSumEl.textContent = "?";
   } else {
-    // показать все карты дилера
-    for (const c of game.dealer) dealerCardsDiv.appendChild(makeCardNode(c));
-    dealerSumDiv.textContent = calcValue(game.dealer);
+    for (let c of dealer) addCard(dealerCardsEl, c);
+    dealerSumEl.textContent = handValue(dealer);
   }
 
-  // игрок
-  for (const c of game.player) playerCardsDiv.appendChild(makeCardNode(c));
-  playerSumDiv.textContent = calcValue(game.player);
-
-  // кнопки
-  hitBtn.disabled = !game.inRound;
-  standBtn.disabled = !game.inRound;
-  doubleBtn.disabled = !game.inRound || !game.canDouble;
-  newBtn.style.display = game.inRound ? 'none' : 'inline-block';
+  for (let c of player) addCard(playerCardsEl, c);
+  playerSumEl.textContent = handValue(player);
 }
 
-function makeCardNode(card) {
-  const d = document.createElement('div');
-  d.className = 'card';
-  d.textContent = cardToText(card);
-  return d;
+function addCard(container, card) {
+  let div = document.createElement("div");
+  div.className = "card " + card.s;
+  div.textContent = card.r + card.s;
+  container.appendChild(div);
 }
 
-function showStatus(text) {
-  statusDiv.textContent = text;
+function setControls(state) {
+  startBtn.disabled = state !== "start";
+  hitBtn.disabled = state !== "play";
+  standBtn.disabled = state !== "play";
+  doubleBtn.disabled = !(state === "play" && canDouble);
 }
 
-// --- Game flow ---
+// --- Игровая логика ---
 function startGame() {
-  // инициализация
-  game.deck = createDeck(4);
-  shuffle(game.deck);
-  game.player = [];
-  game.dealer = [];
-  game.doubled = false;
-  game.inRound = true;
-  game.bet = Math.max(1, parseInt(betInput.value || 10, 10));
-  // проверка баланса
-  if (game.bet > game.money) {
-    showStatus('Ставка больше, чем баланс! Установлена ставка = баланс.');
-    game.bet = game.money;
-    betInput.value = game.bet;
-  }
-  // раздача
-  game.player.push(draw());
-  game.dealer.push(draw());
-  game.player.push(draw());
-  game.dealer.push(draw());
+  deck = makeDeck();
+  player = [];
+  dealer = [];
+  bet = parseInt(betEl.value) || 10;
+  if (bet > money) bet = money;
+  inRound = true;
+  canDouble = false;
+  statusEl.textContent = `Ставка: ${bet}`;
 
-  // дабл доступен пока у игрока 2 карты и он не делал ход
-  game.canDouble = (game.player.length === 2);
-  showStatus(`Игра началась. Ставка: ${game.bet}`);
-  // скрываем старт, показываем игровую зону
-  startScreen.style.display = 'none';
-  gameArea.style.display = 'block';
+  player.push(deck.pop());
+  dealer.push(deck.pop());
+  player.push(deck.pop());
+  dealer.push(deck.pop());
 
-  updateUI();
+  if (player.length === 2) canDouble = true;
 
-  // если у игрока 21 сразу — конец раунда (блекджек)
-  const pv = calcValue(game.player);
-  if (pv === 21) {
+  setControls("play");
+  render();
+
+  if (handValue(player) === 21) {
     endRound();
   }
 }
 
-function playerHit() {
-  if (!game.inRound) return;
-  game.player.push(draw());
-  // после любого "hit" дабл больше недоступен
-  game.canDouble = false;
-  updateUI();
-
-  if (calcValue(game.player) > 21) {
-    showStatus('Перебор! Вы проиграли ставку.');
+function hit() {
+  player.push(deck.pop());
+  canDouble = false;
+  render();
+  if (handValue(player) > 21) {
+    statusEl.textContent = "Перебор! Вы проиграли.";
+    money -= bet;
     endRound();
   }
 }
 
-function playerDouble() {
-  if (!game.inRound) return;
-  // правило: дабл доступен только при двух картах (обычно) и достаточном балансе
-  if (!game.canDouble || game.player.length !== 2) {
-    showStatus('Дабл недоступен (только на первых двух картах).');
-    return;
-  }
-  if (game.bet * 2 > game.money) {
-    showStatus('Недостаточно средств для удвоения ставки.');
-    return;
-  }
-  // удваиваем ставку
-  game.bet *= 2;
-  game.doubled = true;
-  // даём ровно одну карту и немедленно завершаем ход игрока
-  game.player.push(draw());
-  game.canDouble = false;
-  updateUI();
-
-  // после дабла автоматически переходим к дилеру
+function stand() {
+  dealerPlay();
   endRound();
 }
 
-function playerStand() {
-  if (!game.inRound) return;
+function double() {
+  if (!canDouble) return;
+  if (bet * 2 > money) {
+    statusEl.textContent = "Недостаточно средств для дабла!";
+    return;
+  }
+  bet *= 2;
+  player.push(deck.pop());
+  statusEl.textContent = `Ставка удвоена: ${bet}`;
+  render();
+  dealerPlay();
   endRound();
 }
 
 function dealerPlay() {
-  // дилер берёт, пока < 17
-  while (calcValue(game.dealer) < 17) {
-    game.dealer.push(draw());
+  while (handValue(dealer) < 17) {
+    dealer.push(deck.pop());
   }
 }
 
 function endRound() {
-  // завершение раунда
-  game.inRound = false;
-  // дилер играет
-  dealerPlay();
-  updateUI();
+  inRound = false;
+  setControls("start");
+  render();
 
-  const pv = calcValue(game.player);
-  const dv = calcValue(game.dealer);
-  let resultText = '';
+  let pv = handValue(player);
+  let dv = handValue(dealer);
+  let msg = "";
   if (pv > 21) {
-    resultText = `Вы перебрали (${pv}). Проигрыш.`;
-    game.money -= game.bet;
+    msg = "Перебор! Проигрыш.";
+    money -= bet;
   } else if (dv > 21) {
-    resultText = `Дилер перебрал (${dv}). Вы выиграли!`;
-    game.money += game.bet;
+    msg = "Дилер перебрал. Вы выиграли!";
+    money += bet;
   } else if (pv > dv) {
-    resultText = `Вы ${pv} vs ${dv} — победа!`;
-    game.money += game.bet;
+    msg = `Вы выиграли! ${pv} против ${dv}`;
+    money += bet;
   } else if (pv < dv) {
-    resultText = `Вы ${pv} vs ${dv} — проигрыш.`;
-    game.money -= game.bet;
+    msg = `Вы проиграли. ${pv} против ${dv}`;
+    money -= bet;
   } else {
-    resultText = `Ничья ${pv} vs ${dv}. Ставка возвращена.`;
-    // баланс не меняем
+    msg = `Ничья! ${pv} против ${dv}`;
   }
-
-  showStatus(resultText + ` Баланс: ${game.money}`);
-  updateUI();
-
-  // показываем кнопку "Новая игра"
-  newBtn.style.display = 'inline-block';
+  statusEl.textContent = msg;
+  render();
 }
 
-// --- Event listeners ---
-startBtn.addEventListener('click', () => {
-  startGame();
-});
+// --- События ---
+startBtn.addEventListener("click", startGame);
+hitBtn.addEventListener("click", hit);
+standBtn.addEventListener("click", stand);
+doubleBtn.addEventListener("click", double);
 
-hitBtn.addEventListener('click', () => {
-  playerHit();
-});
-
-standBtn.addEventListener('click', () => {
-  playerStand();
-});
-
-doubleBtn.addEventListener('click', () => {
-  playerDouble();
-});
-
-newBtn.addEventListener('click', () => {
-  // вернуться к стартовому экран
-  game.inRound = false;
-  startScreen.style.display = 'block';
-  gameArea.style.display = 'none';
-  showStatus('');
-  newBtn.style.display = 'none';
-  // оставляем баланс и ставку как есть
-  moneyDisplay.textContent = game.money;
-});
-
-// --- Инициализация отображения ---
-updateUI();
+setControls("start");
+render();
