@@ -53,7 +53,7 @@ function makeCardNode(card, hidden=false) {
     return d;
   }
   const img = document.createElement('img');
-  img.src = `cards/${cardFilename(card)}`;
+  img.src = `assets/cards/${cardFilename(card)}`;
   img.alt = `${card.rank}${card.suit}`;
   d.appendChild(img);
   return d;
@@ -219,10 +219,17 @@ function endRoundCleanup() {
 startBtn.addEventListener('click', () => {
   money = parseInt(startMoneyInput.textContent,10) || 1000;
   const startBet = parseInt(startBetInput.value,10) || 10;
-  startScreen.style.display = 'none'; gameScreen.style.display = 'block';
-  moneyEl.textContent = money; betEl.value = startBet;
-  reshuffleShoe(); setControls('start');
+  startScreen.style.display = 'none';
+  gameScreen.style.display = 'block';
+  moneyEl.textContent = money; 
+  betEl.value = startBet;
+  reshuffleShoe(); 
+  setControls('start');
+
+  // ✅ стартуем первую раздачу сразу
+  startRound(startBet);
 });
+
 btnHit.addEventListener('click', playerHit);
 btnStand.addEventListener('click', playerStand);
 btnDouble.addEventListener('click', playerDouble);
