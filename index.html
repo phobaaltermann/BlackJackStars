@@ -3,50 +3,45 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>BlackJackStars</title>
+  <title>Blackjack</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <!-- START SCREEN -->
-  <div id="start-screen" style="text-align:center; padding:40px;">
-    <h1>BlackJackStars</h1>
-    <p>Нажми, чтобы начать игру</p>
-    <button id="start-btn">Начать игру</button>
-    <div style="margin-top:12px;">
-      <span>Баланс: </span><span id="money-display">1000</span>
-    </div>
-  </div>
+  <div class="container">
+    <h1>Blackjack</h1>
 
-  <!-- GAME AREA (скрывается пока не начнут) -->
-  <div id="game-area" style="display:none; padding:20px;">
+    <!-- Баланс и ставка -->
+    <div class="info">
+      <div>Баланс: <span id="money">1000</span></div>
+      <div>
+        Ставка: <input type="number" id="bet" min="1" value="50" />
+      </div>
+    </div>
+
+    <!-- Игровая зона -->
+    <div id="table">
+      <div class="hand">
+        <h2>Дилер</h2>
+        <div id="dealer-cards" class="cards"></div>
+        <div id="dealer-sum" class="sum"></div>
+      </div>
+
+      <div class="hand">
+        <h2>Игрок</h2>
+        <div id="player-cards" class="cards"></div>
+        <div id="player-sum" class="sum"></div>
+      </div>
+    </div>
+
+    <!-- Панель управления -->
+    <div id="controls">
+      <button id="start">Начать игру</button>
+      <button id="hit" disabled>Взять</button>
+      <button id="stand" disabled>Стоп</button>
+      <button id="double" disabled>Дабл</button>
+    </div>
+
     <div id="status"></div>
-
-    <div id="dealer-area" class="hand">
-      <h3>Дилер</h3>
-      <div id="dealer-cards"></div>
-      <div id="dealer-sum"></div>
-    </div>
-
-    <div id="player-area" class="hand">
-      <h3>Игрок</h3>
-      <div id="player-cards"></div>
-      <div id="player-sum"></div>
-    </div>
-
-    <div style="margin-top:18px;">
-      <label>Ставка: <input id="bet-input" type="number" value="10" min="1" /></label>
-    </div>
-
-    <div style="margin-top:12px;">
-      <button id="hit-btn">Взять</button>
-      <button id="stand-btn">Стоп</button>
-      <button id="double-btn">Дабл</button>
-      <button id="new-btn" style="display:none;">Новая игра</button>
-    </div>
-
-    <div style="margin-top:8px;">
-      <small>Примечание: дабл доступен только на первых двух картах.</small>
-    </div>
   </div>
 
   <script src="script.js"></script>
