@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Blackjack — Modern Browser Edition</title>
+  <title>Blackjack — Stars!</title>
 
   <!-- Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
@@ -14,9 +14,9 @@
     <!-- START SCREEN -->
     <section id="start-screen" class="panel center">
       <h1>BlackJack</h1>
-      <p>Классическая игра с 6 колод. Дилер стоит на любом 17 (S17).</p>
+      <p>Классическая игра с 6 колодами. Дилер останавливается на 17.</p>
       <div class="row">
-        <label>Баланс: <strong id="start-money">1000</strong></label>
+        <label>Баланс: <strong id="start-money">1000 ⭐</strong></label>
       </div>
       <div class="row" style="margin-top:8px;">
         <label>Ставка: <input id="start-bet" type="number" min="1" value="20" /></label>
@@ -24,7 +24,7 @@
       <div class="row" style="margin-top:12px;">
         <button id="btn-start">Начать игру</button>
       </div>
-      <p class="muted">Double — доступен только на первых двух картах.</p>
+      <p class="muted">Суть игры в том, чтобы набрать наиболее близкое к 21 количество очков, чем у дилера, но не больше 21. Каждая рука рассматривается отдельно; вы играете только против дилера; вы не играете против других игроков. Если дилер или игрок набирает больше 21, это называется "Bust" – перебор, и это означает немедленный проигрыш.</p>
     </section>
 
     <!-- GAME AREA -->
@@ -62,3 +62,4 @@
   <script src="script.js"></script>
 </body>
 </html>
+
