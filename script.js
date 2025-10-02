@@ -37,11 +37,11 @@ let money = 1000;
 function cardFilename(card) {
   let rank = card.rank;
   let suit = '';
-  if (card.suit === '♥') suit = 'hearts';
-  if (card.suit === '♦') suit = 'diamonds';
-  if (card.suit === '♣') suit = 'clubs';
-  if (card.suit === '♠') suit = 'spades';
-  return `${rank}_of_${suit}.png`;
+  if (card.suit === '♥') suit = 'H';
+  if (card.suit === '♦') suit = 'D';
+  if (card.suit === '♣') suit = 'C';
+  if (card.suit === '♠') suit = 'S';
+  return `${rank}${suit}.png`;
 }
 
 function makeCardNode(card, hidden=false) {
@@ -234,3 +234,4 @@ btnHit.addEventListener('click', playerHit);
 btnStand.addEventListener('click', playerStand);
 btnDouble.addEventListener('click', playerDouble);
 btnNew.addEventListener('click', () => startRound(parseInt(betEl.value,10)||1));
+
