@@ -1,48 +1,54 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>Blackjack Stars</title>
-  <link rel="stylesheet" href="styles.css">
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>BlackJackStars</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>Blackjack Stars</h1>
-      <div class="top-info">
-        <span>Баланс: <span id="balance">0</span> ⭐</span>
-        <span>Ставка: <span id="bet">50</span> ⭐</span>
-      </div>
-    </header>
-
-    <main>
-      <div class="hand dealer">
-        <h2>Дилер</h2>
-        <div id="dealer-cards" class="cards"></div>
-        <div id="dealer-score" class="score"></div>
-      </div>
-      <div class="hand player">
-        <h2>Вы</h2>
-        <div id="player-cards" class="cards"></div>
-        <div id="player-score" class="score"></div>
-      </div>
-      <div id="message" class="message"></div>
-    </main>
-
-    <footer>
-      <div class="bet-controls">
-        <button onclick="changeBet(-10)">–10</button>
-        <button onclick="changeBet(10)">+10</button>
-      </div>
-      <div class="controls">
-        <button onclick="newDeal()">Новая игра</button>
-        <button onclick="hit()">Hit</button>
-        <button onclick="stand()">Stand</button>
-        <button onclick="doubleDown()">Double</button>
-      </div>
-    </footer>
+  <!-- START SCREEN -->
+  <div id="start-screen" style="text-align:center; padding:40px;">
+    <h1>BlackJackStars</h1>
+    <p>Нажми, чтобы начать игру</p>
+    <button id="start-btn">Начать игру</button>
+    <div style="margin-top:12px;">
+      <span>Баланс: </span><span id="money-display">1000</span>
+    </div>
   </div>
+
+  <!-- GAME AREA (скрывается пока не начнут) -->
+  <div id="game-area" style="display:none; padding:20px;">
+    <div id="status"></div>
+
+    <div id="dealer-area" class="hand">
+      <h3>Дилер</h3>
+      <div id="dealer-cards"></div>
+      <div id="dealer-sum"></div>
+    </div>
+
+    <div id="player-area" class="hand">
+      <h3>Игрок</h3>
+      <div id="player-cards"></div>
+      <div id="player-sum"></div>
+    </div>
+
+    <div style="margin-top:18px;">
+      <label>Ставка: <input id="bet-input" type="number" value="10" min="1" /></label>
+    </div>
+
+    <div style="margin-top:12px;">
+      <button id="hit-btn">Взять</button>
+      <button id="stand-btn">Стоп</button>
+      <button id="double-btn">Дабл</button>
+      <button id="new-btn" style="display:none;">Новая игра</button>
+    </div>
+
+    <div style="margin-top:8px;">
+      <small>Примечание: дабл доступен только на первых двух картах.</small>
+    </div>
+  </div>
+
   <script src="script.js"></script>
 </body>
 </html>
