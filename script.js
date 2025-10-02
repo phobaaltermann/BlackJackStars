@@ -48,16 +48,12 @@ function makeCardNode(card, hidden=false) {
   const d = document.createElement('div');
   d.className = 'card';
   if (hidden) {
-    // если есть back.png, можно использовать: 
-    // let img = document.createElement('img');
-    // img.src = `assets/cards/back.png`;
-    // d.appendChild(img);
     d.classList.add('hidden');
     d.textContent = '🂠';
     return d;
   }
   const img = document.createElement('img');
-  img.src = `assets/cards/${cardFilename(card)}`;
+  img.src = `cards/${cardFilename(card)}`;
   img.alt = `${card.rank}${card.suit}`;
   d.appendChild(img);
   return d;
